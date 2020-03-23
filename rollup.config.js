@@ -7,6 +7,10 @@ import { terser } from 'rollup-plugin-terser';
 import config from 'sapper/config/rollup.js';
 import pkg from './package.json';
 
+import getPreprocessor from 'svelte-preprocess';
+import path from 'path';
+import postcss from 'rollup-plugin-postcss';
+
 const mode = process.env.NODE_ENV;
 const dev = mode === 'development';
 const legacy = !!process.env.SAPPER_LEGACY_BUILD;
@@ -15,6 +19,30 @@ const onwarn = (warning, onwarn) =>
 	(warning.code === 'CIRCULAR_DEPENDENCY' &&
 		/[/\\]@sapper[/\\]/.test(warning.message)) ||
 	onwarn(warning);
+
+const postcssPlugins = (purgecss = false) => {
+	return [
+		require('postcss-import')(),
+		require('postcss-url')(),
+		require('tailwindcss')('./tailwind.config.js'),
+		require('autoprefixer')(),
+		purgecss &&
+			require('@fullhuman/postcss-purgecss')({
+				content: ['./src/**/*.svelte', './src/**/*.html'],
+				defaultExtractor: content =>
+					content.match(/[A-Za-z0-9-_:/]+/g) || [],
+			}),
+		!dev && require('cssnano')({ preset: 'default' }),
+	].filter(Boolean);
+};
+
+const preprocess = getPreprocessor({
+	transformers: {
+		postcss: {
+			plugins: postcssPlugins(),
+		},
+	},
+});
 
 export default {
 	client: {
@@ -29,6 +57,7 @@ export default {
 				dev,
 				hydratable: true,
 				emitCss: true,
+				preprocess,
 			}),
 			resolve({
 				browser: true,
@@ -80,11 +109,16 @@ export default {
 			svelte({
 				generate: 'ssr',
 				dev,
+				preprocess,
 			}),
 			resolve({
 				dedupe: ['svelte'],
 			}),
 			commonjs(),
+			postcss({
+				plugins: postcssPlugins(!dev),
+				extract: path.resolve(__dirname, './static/global.css'),
+			}),
 		],
 		external: Object.keys(pkg.dependencies).concat(
 			require('module').builtinModules ||

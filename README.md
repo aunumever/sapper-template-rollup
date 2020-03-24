@@ -9,11 +9,8 @@ A modified default [Sapper](https://github.com/sveltejs/sapper) template, availa
 [`degit`](https://github.com/Rich-Harris/degit) is a scaffolding tool that lets you create a directory from a branch in a repository.
 
 ```bash
-# for Rollup
-npx degit "nhristov/sapper-template-rollup" my-app
-
 # for Rollup with postcss, purgecss, cssnano, tailwindcss and svelte-preprocess
-npx degit "nhristov/sapper-template-rollup#postcss-tailwind-purgecss" my-app
+npx degit "nhristov/sapper-template-rollup" my-app
 ```
 
 ### Running the project
